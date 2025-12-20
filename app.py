@@ -2,6 +2,8 @@ import streamlit as st
 import pickle
 import pandas as pd
 
+train_vis = pd.read_csv("train_cleaned.csv")
+
 model_bundle = pickle.load(open("rf_fraud_model.pkl", "rb"))
 
 model = model_bundle["model"]
@@ -13,16 +15,23 @@ feature_columns = model_bundle["feature_columns"]
 st.title("🔍 Fraud Detection Demo App")
 st.write("Masukkan data transaksi untuk melihat prediksi fraud.")
 
-transaction_amount = st.number_input("Transaction Amount", min_value=1, value=120000)
-payment_method_name = st.selectbox("Payment Method", encoder_method.classes_)
-payment_provider_name = st.selectbox("Payment Provider", encoder_provider.classes_)
-processing_seconds = st.number_input("Processing Seconds", min_value=0.0, value=5.0)
-buyer_seller_tx_count = st.number_input("Buyer–Seller Tx Count", min_value=0, value=5)
-buyer_total_tx = st.number_input("Buyer Total Tx", min_value=0, value=10)
-buyer_avg_amount = st.number_input("Buyer Average Amount", min_value=0, value=50000)
-buyer_promo_count = st.number_input("Buyer Promo Count", min_value=0, value=2)
-seller_total_tx = st.number_input("Seller Total Tx", min_value=0, value=120)
-seller_repeat_buyer = st.number_input("Repeat Buyer Count", min_value=0, value=3)
+tab1, tab2 = st.tabs([
+    "🧪 Test Model",
+    "📊 Data Training"
+])
+
+with tab1:
+    st.write("Masukkan data transaksi untuk melihat prediksi fraud.")
+    transaction_amount = st.number_input("Transaction Amount", min_value=1, value=120000)
+    payment_method_name = st.selectbox("Payment Method", encoder_method.classes_)
+    payment_provider_name = st.selectbox("Payment Provider", encoder_provider.classes_)
+    processing_seconds = st.number_input("Processing Seconds", min_value=0.0, value=5.0)
+    buyer_seller_tx_count = st.number_input("Buyer–Seller Tx Count", min_value=0, value=5)
+    buyer_total_tx = st.number_input("Buyer Total Tx", min_value=0, value=10)
+    buyer_avg_amount = st.number_input("Buyer Average Amount", min_value=0, value=50000)
+    buyer_promo_count = st.number_input("Buyer Promo Count", min_value=0, value=2)
+    seller_total_tx = st.number_input("Seller Total Tx", min_value=0, value=120)
+    seller_repeat_buyer = st.number_input("Repeat Buyer Count", min_value=0, value=3)
 
 if st.button("Predict Fraud"):
 
@@ -88,3 +97,28 @@ if st.button("Predict Fraud"):
         st.success("✅ Transaksi aman / normal.")
 
     st.json(data_input.to_dict(orient="records")[0])
+
+with tab2:
+    st.subheader("📊 Data Training (Setelah Cleaning & Feature Engineering)")
+
+    st.write("Jumlah data:", train_vis.shape)
+    st.dataframe(train_vis.head(100))
+
+    st.subheader("Distribusi Label Fraud")
+    st.bar_chart(train_vis["fraud_label"].value_counts())
+
+    st.subheader("Distribusi Transaction Amount")
+    st.line_chart(train_vis["transaction_amount"])
+
+    rule_cols = [
+        "rule_big_amount",
+        "rule_fast",
+        "rule_new_buyer_big_tx",
+        "rule_abnormal_ratio",
+        "rule_promo_abuse"
+    ]
+
+    st.subheader("Jumlah Rule Fraud Terpenuhi")
+    st.bar_chart(train_vis[rule_cols].sum())
+
+
